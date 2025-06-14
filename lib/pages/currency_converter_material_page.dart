@@ -14,42 +14,45 @@ class CurrencyConverterPage extends StatefulWidget {
 }
 
 class _CurrencyConverterPageState extends State<CurrencyConverterPage> {
- 
-
   final TextEditingController textEditingController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  bool isLoading=false;
+  bool isLoading = false;
 
   Future<double> getExchangeRate() async {
-  final response = await http.get(
-    Uri.parse('https://api.exchangerate.host/convert?from=USD&to=INR&amount=1&access_key=7d030b66dc77d2f964df4725f14c4adc'),
-  );
+    final response = await http.get(
+      Uri.parse(
+        'https://api.exchangerate.host/convert?from=USD&to=INR&amount=1&access_key=7d030b66dc77d2f964df4725f14c4adc',
+      ),
+    );
 
-  if (response.statusCode == 200) {
-    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
 
-    if (data['result'] != null && data['result'] is num) {
-      return (data['result'] as num).toDouble();
+      if (data['result'] != null && data['result'] is num) {
+        return (data['result'] as num).toDouble();
+      } else {
+        throw Exception('Invalid response format');
+      }
     } else {
-      throw Exception('Invalid response format');
+      throw Exception('Failed to fetch exchange rate');
     }
-  } else {
-    throw Exception('Failed to fetch exchange rate');
   }
-}
 
   void convertCurrency() async {
     setState(() {
-      isLoading=true;
+      isLoading = true;
     });
     double inrRate = await getExchangeRate(); // live rate
-    final inputUSD=double.parse(textEditingController.text);
+    final inputUSD = double.parse(textEditingController.text);
     setState(() {
       result = inputUSD * inrRate;
-      isLoading=false;
+      isLoading = false;
     });
-    
-    print(result);
+  }
+  @override
+ void dispose() {
+    textEditingController.dispose();
+    super.dispose();
   }
 
   @override
@@ -151,7 +154,7 @@ class _CurrencyConverterPageState extends State<CurrencyConverterPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                "₹${result.toString()}",
+                "₹${result != 0 ? result.toStringAsFixed(2) : result.toStringAsFixed(0)}",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 40,
@@ -194,8 +197,7 @@ class _CurrencyConverterPageState extends State<CurrencyConverterPage> {
                       child: ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                          convertCurrency();
-                            
+                            convertCurrency();
                           }
                         },
                         style: ButtonStyle(
@@ -213,7 +215,7 @@ class _CurrencyConverterPageState extends State<CurrencyConverterPage> {
                           ),
                         ),
                         child: Text(
-                           isLoading? "Converting..." : "Convert",
+                          isLoading ? "Converting..." : "Convert",
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
